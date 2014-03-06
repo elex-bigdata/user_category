@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import static com.elex.bigdata.user_category.train.RedisConstans.*;
 
 
@@ -42,7 +43,7 @@ public class BayesTrainer {
     this.url_probability = new HashMap<String, Double>();
     this.category_probability = new HashMap<String, Double>();
     this.manager = new BasicRedisShardedPoolManager("BayesTrainer", "redis.site.properties");
-    this.configuration=Config.createConfig("user_category.properties", Config.ConfigFormat.properties);
+    this.configuration = Config.createConfig("user_category.properties", Config.ConfigFormat.properties);
   }
 
   public static void main(String[] args) {
@@ -133,10 +134,10 @@ public class BayesTrainer {
     reader.close();
   }
 
-  private void load_url_frequent(ShardedJedis shardedJedis){
-    Map<String,String> map=shardedJedis.hgetAll("url_frequent");
-    for(Map.Entry<String,String> entry:map.entrySet()){
-      this.url_frequent.put(entry.getKey(),Long.valueOf(entry.getValue()));
+  private void load_url_frequent(ShardedJedis shardedJedis) {
+    Map<String, String> map = shardedJedis.hgetAll("url_frequent");
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      this.url_frequent.put(entry.getKey(), Long.valueOf(entry.getValue()));
     }
   }
 
@@ -155,44 +156,44 @@ public class BayesTrainer {
     reader.close();
   }
 
-  private void  putToRedis(ShardedJedis shardedJedis){
-     Map<String,String> url_probability_map=new HashMap<String, String>();
-     for(Map.Entry<String,Double> entry: url_probability.entrySet()){
-        url_probability_map.put(entry.getKey(),String.valueOf(entry.getValue()));
-     }
-     shardedJedis.hmset(url_probability_key,url_probability_map);
-     Map<String,String> category_probability_map=new HashMap<String, String>();
-     for(Map.Entry<String,Double> entry: category_probability.entrySet()){
-       category_probability_map.put(entry.getKey(),String.valueOf(entry.getValue()));
-     }
-     shardedJedis.hmset(category_probability_key,category_probability_map);
-     Map<String,String> url_frequent_map=new HashMap<String, String>();
-     for(Map.Entry<String,Long> entry: url_frequent.entrySet()){
-      url_frequent_map.put(entry.getKey(),String.valueOf(entry.getValue()));
-     }
-     shardedJedis.hmset(url_frequent_key,url_frequent_map);
-     Map<String,String> category_frequent_map=new HashMap<String, String>();
-     for(Map.Entry<String,Long> entry: category_frequent.entrySet()){
-       category_frequent_map.put(entry.getKey(),String.valueOf(entry.getValue()));
-     }
-     shardedJedis.hmset(category_frequent_key,category_frequent_map);
-     shardedJedis.hmset(url_category_key,url_category);
+  private void putToRedis(ShardedJedis shardedJedis) {
+    Map<String, String> url_probability_map = new HashMap<String, String>();
+    for (Map.Entry<String, Double> entry : url_probability.entrySet()) {
+      url_probability_map.put(entry.getKey(), String.valueOf(entry.getValue()));
+    }
+    shardedJedis.hmset(url_probability_key, url_probability_map);
+    Map<String, String> category_probability_map = new HashMap<String, String>();
+    for (Map.Entry<String, Double> entry : category_probability.entrySet()) {
+      category_probability_map.put(entry.getKey(), String.valueOf(entry.getValue()));
+    }
+    shardedJedis.hmset(category_probability_key, category_probability_map);
+    Map<String, String> url_frequent_map = new HashMap<String, String>();
+    for (Map.Entry<String, Long> entry : url_frequent.entrySet()) {
+      url_frequent_map.put(entry.getKey(), String.valueOf(entry.getValue()));
+    }
+    shardedJedis.hmset(url_frequent_key, url_frequent_map);
+    Map<String, String> category_frequent_map = new HashMap<String, String>();
+    for (Map.Entry<String, Long> entry : category_frequent.entrySet()) {
+      category_frequent_map.put(entry.getKey(), String.valueOf(entry.getValue()));
+    }
+    shardedJedis.hmset(category_frequent_key, category_frequent_map);
+    shardedJedis.hmset(url_category_key, url_category);
   }
 
-  private void  putToDisk() throws IOException {
-    String url_frequent_file=getUrlFrequentFile();
-    BufferedWriter url_frequent_writer=new BufferedWriter(new FileWriter(url_frequent_file));
-    for(Map.Entry<String,Long> entry: url_frequent.entrySet()){
-      String line=entry.getKey()+"\t"+String.valueOf(entry.getValue());
+  private void putToDisk() throws IOException {
+    String url_frequent_file = getUrlFrequentFile();
+    BufferedWriter url_frequent_writer = new BufferedWriter(new FileWriter(url_frequent_file));
+    for (Map.Entry<String, Long> entry : url_frequent.entrySet()) {
+      String line = entry.getKey() + "\t" + String.valueOf(entry.getValue());
       url_frequent_writer.write(line);
       url_frequent_writer.newLine();
     }
     url_frequent_writer.flush();
     url_frequent_writer.close();
-    String category_frequent_file=getCategoryFrequentFile();
-    BufferedWriter category_frequent_writer=new BufferedWriter(new FileWriter(category_frequent_file));
-    for(Map.Entry<String,Long> entry: category_frequent.entrySet()){
-      String line=entry.getKey()+"\t"+String.valueOf(entry.getValue());
+    String category_frequent_file = getCategoryFrequentFile();
+    BufferedWriter category_frequent_writer = new BufferedWriter(new FileWriter(category_frequent_file));
+    for (Map.Entry<String, Long> entry : category_frequent.entrySet()) {
+      String line = entry.getKey() + "\t" + String.valueOf(entry.getValue());
       category_frequent_writer.write(line);
       category_frequent_writer.newLine();
     }
@@ -200,31 +201,35 @@ public class BayesTrainer {
     category_frequent_writer.close();
   }
 
-  private String getUrlFrequentFile(){
+  private String getUrlFrequentFile() {
     //todo rename file and get new file
-    SimpleDateFormat format=new SimpleDateFormat("yyyyMMddHH");
-    String timeStr=format.format(new Date());
-    return getDefaultUrlFrequentFile()+timeStr;
-  }
-  private String getCategoryFrequentFile(){
-    //todo rename file and get new file
-    SimpleDateFormat format=new SimpleDateFormat("yyyyMMddHH");
-    String timeStr=format.format(new Date());
-    return getDefaultCategoryFrequentFile()+timeStr;
+    SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHH");
+    String timeStr = format.format(new Date());
+    return getDefaultUrlFrequentFile() + timeStr;
   }
 
-  protected String getDefaultUrlFrequentFile(){
+  private String getCategoryFrequentFile() {
+    //todo rename file and get new file
+    SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHH");
+    String timeStr = format.format(new Date());
+    return getDefaultCategoryFrequentFile() + timeStr;
+  }
+
+  protected String getDefaultUrlFrequentFile() {
     return configuration.getString("url_frequent_file");
   }
-  protected String getDefaultCategoryFrequentFile(){
+
+  protected String getDefaultCategoryFrequentFile() {
     return configuration.getString("category_frequent_file");
   }
-  protected String getDefaultUrlcategoryFile(){
+
+  protected String getDefaultUrlcategoryFile() {
     return configuration.getString("url_category_file");
   }
+
   public void trainFromRedis(String click_log_file) {
     ShardedJedis shardedJedis = null;
-    boolean successful=true;
+    boolean successful = true;
     try {
       shardedJedis = manager.borrowShardedJedis();
       load_url_category(shardedJedis);
@@ -234,11 +239,11 @@ public class BayesTrainer {
       train_model();
       putToRedis(shardedJedis);
       putToDisk();
-    }catch ( Exception e){
-      successful=false;
+    } catch (Exception e) {
+      successful = false;
       e.printStackTrace();
-    }finally {
-      if(successful)
+    } finally {
+      if (successful)
         manager.returnShardedJedis(shardedJedis);
       else
         manager.returnBrokenShardedJedis(shardedJedis);
@@ -247,20 +252,20 @@ public class BayesTrainer {
 
   public void trainFromFile(String click_log_file, String url_category_file, String url_frequent_file, String category_frequent_file) {
     ShardedJedis shardedJedis = null;
-    boolean successful=true;
+    boolean successful = true;
     try {
-     load_url_category(url_category_file);
-     load_url_frequent(url_frequent_file);
-     load_category_frequent(category_frequent_file);
-     load_click_log(click_log_file);
-     train_model();
-     putToRedis(shardedJedis);
-     putToDisk();
-    }catch ( Exception e){
-      successful=false;
+      load_url_category(url_category_file);
+      load_url_frequent(url_frequent_file);
+      load_category_frequent(category_frequent_file);
+      load_click_log(click_log_file);
+      train_model();
+      putToRedis(shardedJedis);
+      putToDisk();
+    } catch (Exception e) {
+      successful = false;
       e.printStackTrace();
-    }finally {
-      if(successful)
+    } finally {
+      if (successful)
         manager.returnShardedJedis(shardedJedis);
       else
         manager.returnBrokenShardedJedis(shardedJedis);
@@ -270,36 +275,33 @@ public class BayesTrainer {
 
   private void load_click_log(String click_log_file) throws IOException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(click_log_file)), "UTF8"));
-    ObjectMapper mapper = new ObjectMapper();
     String line = "";
+    String[] fields = new String[2];
+    String url = "";
+    Long frequent = new Long(0);
     while ((line = reader.readLine()) != null) {
-      System.out.println(line);
-      Map<String, Object> uid_info = null;
       try {
-        uid_info = mapper.readValue(line, Map.class);
-      } catch (IOException ex) {
+        fields = line.split("\t");
+        url = fields[0];
+        frequent = Long.parseLong(fields[1]);
+      } catch (Exception ex) {
         continue;
       }
-      System.out.println(line);
-      String uid = (String) uid_info.get("uid");
-      List<Map<String, Object>> urls_info = (List<Map<String, Object>>) uid_info.get("history");
-      for (Map<String, Object> url_info : urls_info) {
-        String url = (String) url_info.get("url");
-        Long frequent = Long.parseLong(url_info.get("cf").toString());
-        if (this.url_category.containsKey(url)) {
-          String category = this.url_category.get(url);
-          if (!this.url_frequent.containsKey(url)) {
-            this.url_frequent.put(url, frequent);
-          } else {
-            this.url_frequent.put(url, this.url_frequent.get(url) + frequent);
-          }
-          if (!this.category_frequent.containsKey(category)) {
-            this.category_frequent.put(category, frequent);
-          } else {
-            this.category_frequent.put(category, this.category_frequent.get(category) + frequent);
-          }
-          this.click_frequent += frequent;
+      //System.out.println(line);
+
+      if (this.url_category.containsKey(url)) {
+        String category = this.url_category.get(url);
+        if (!this.url_frequent.containsKey(url)) {
+          this.url_frequent.put(url, frequent);
+        } else {
+          this.url_frequent.put(url, this.url_frequent.get(url) + frequent);
         }
+        if (!this.category_frequent.containsKey(category)) {
+          this.category_frequent.put(category, frequent);
+        } else {
+          this.category_frequent.put(category, this.category_frequent.get(category) + frequent);
+        }
+        this.click_frequent += frequent;
       }
     }
     reader.close();
