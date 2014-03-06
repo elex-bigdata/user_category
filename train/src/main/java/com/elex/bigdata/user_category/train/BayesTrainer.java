@@ -119,7 +119,8 @@ public class BayesTrainer {
     }
   }
 
-  private void load_category_frequent(String category_frequent_file) throws IOException {
+  private void load_category_frequent(String category_frequent_file)  {
+    try{
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(category_frequent_file)), "UTF8"));
     String line = "";
     while ((line = reader.readLine()) != null) {
@@ -132,6 +133,9 @@ public class BayesTrainer {
       this.category_frequent.put(category, Long.valueOf(frequent));
     }
     reader.close();
+    }catch (IOException e){
+      e.printStackTrace();
+    }
   }
 
   private void load_url_frequent(ShardedJedis shardedJedis) {
@@ -141,7 +145,8 @@ public class BayesTrainer {
     }
   }
 
-  private void load_url_frequent(String url_frequent_file) throws IOException {
+  private void load_url_frequent(String url_frequent_file)  {
+    try{
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(url_frequent_file)), "UTF8"));
     String line = "";
     while ((line = reader.readLine()) != null) {
@@ -154,6 +159,9 @@ public class BayesTrainer {
       this.category_frequent.put(url, Long.valueOf(frequent));
     }
     reader.close();
+    }catch (IOException e){
+      e.printStackTrace();
+    }
   }
 
   private void putToRedis(ShardedJedis shardedJedis) {
