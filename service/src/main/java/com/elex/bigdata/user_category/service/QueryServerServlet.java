@@ -20,7 +20,7 @@ public class QueryServerServlet extends HessianServlet implements Submit{
   private BasicRedisShardedPoolManager redisShardedPoolManager=null;
   private Map<String,String> url_category=new HashMap<String, String>();
   public QueryServerServlet(){
-     redisShardedPoolManager=new BasicRedisShardedPoolManager("user_category_server","redis.site.properties");
+     redisShardedPoolManager=new BasicRedisShardedPoolManager("user_category_server","/redis.site.properties");
      boolean successful=true;
      ShardedJedis shardedJedis=null;
      try{
