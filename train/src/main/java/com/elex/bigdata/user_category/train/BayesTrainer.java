@@ -43,7 +43,7 @@ public class BayesTrainer {
     this.url_probability = new HashMap<String, Double>();
     this.category_probability = new HashMap<String, Double>();
     this.manager = new BasicRedisShardedPoolManager("BayesTrainer", "/redis.site.properties");
-    this.configuration = Config.createConfig("user_category.properties", Config.ConfigFormat.properties);
+    this.configuration = Config.createConfig("/user_category.properties", Config.ConfigFormat.properties);
   }
 
   public static void main(String[] args) {
