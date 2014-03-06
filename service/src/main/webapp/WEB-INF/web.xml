@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         version="2.5">
+  <!-- Welcome list, test for available -->
+  <welcome-file-list>
+    <welcome-file>index.jsp</welcome-file>
+  </welcome-file-list>
+
+  <!-- Query service servlet -->
+  <servlet>
+    <servlet-name>QueryServerServlet</servlet-name>
+    <servlet-class>com.elex.bigdata.user_category.service.QueryServerServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>QueryServerServlet</servlet-name>
+    <url-pattern>/q</url-pattern>
+  </servlet-mapping>
+
+</web-app>
