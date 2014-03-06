@@ -69,6 +69,7 @@ public class BayesTrainer {
     } else {
       logger.info("args[1] should be disk or redis but it is " + args[1]);
     }
+    logger.info("train completed");
   }
   /*
      not always in memory.runs once a day.
@@ -267,6 +268,7 @@ public class BayesTrainer {
       load_category_frequent(category_frequent_file);
       load_click_log(click_log_file);
       train_model();
+      shardedJedis=manager.borrowShardedJedis();
       putToRedis(shardedJedis);
       putToDisk();
     } catch (Exception e) {
