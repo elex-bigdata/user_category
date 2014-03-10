@@ -1,9 +1,9 @@
 tomcat_home_tail=user_cat
-tomcat_home=/home/yb/catalina/apache-tomcat-7.0.47.${tomcat_home_tail}
+tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.52.${tomcat_home_tail}
 baseDir=`dirname $0`/..
 aid=user_category_service
 sh ${tomcat_home}/bin/shutdown.sh
-sleep 3
+sleep 2
 proc=`ps aux | grep java | grep tomcat | grep -v "grep" | grep ${tomcat_home_tail} | awk '{print $2}'`
 if [ "" != "$proc" ];then
   echo "Tomcat(${proc}) is not shutdown, and it will be killed directly."
