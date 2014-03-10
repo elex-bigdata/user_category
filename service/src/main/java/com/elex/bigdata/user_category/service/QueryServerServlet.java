@@ -1,11 +1,16 @@
 package com.elex.bigdata.user_category.service;
 
 import com.caucho.hessian.server.HessianServlet;
+import com.elex.bigdata.conf.Config;
+import com.elex.bigdata.hashing.BDMD5;
 import com.elex.bigdata.ro.BasicRedisShardedPoolManager;
+import org.apache.commons.configuration.Configuration;
+import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import redis.clients.jedis.ShardedJedis;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import static com.elex.bigdata.user_category.service.RedisConstans.*;
 
@@ -19,6 +24,7 @@ import static com.elex.bigdata.user_category.service.RedisConstans.*;
 public class QueryServerServlet extends HessianServlet implements Submit{
   private BasicRedisShardedPoolManager redisShardedPoolManager=null;
   private Map<String,String> url_category=new HashMap<String, String>();
+  private Logger logger=Logger.getLogger(QueryServerServlet.class);
   public QueryServerServlet(){
      redisShardedPoolManager=new BasicRedisShardedPoolManager("user_category_server","/redis.site.properties");
      boolean successful=true;
@@ -43,9 +49,22 @@ public class QueryServerServlet extends HessianServlet implements Submit{
     try{
       shardedJedis=redisShardedPoolManager.borrowShardedJedis();
       Map<String,Double> user_category=inference(shardedJedis,user);
-      ObjectMapper mapper=new ObjectMapper();
-      String categoryStr=mapper.writeValueAsString(user_category);
-      shardedJedis.hset("user_categories",uid,categoryStr);
+
+      Map<String,Integer> spUser=getSimplifiedCategories(user_category);
+      StringBuilder resultBuilder=new StringBuilder();
+      for(Map.Entry<String,Integer> entry1: spUser.entrySet()){
+        resultBuilder.append(entry1.getKey());
+        if(entry1.getValue()<10)
+          resultBuilder.append("0"+entry1.getValue());
+        else
+          resultBuilder.append(entry1.getValue());
+      }
+      String categoryStr=resultBuilder.toString();
+      String uidMd5= BDMD5.getInstance().toMD5(uid);
+      shardedJedis.set(uidMd5,categoryStr);
+      //ObjectMapper mapper=new ObjectMapper();
+      //String categoryStr=mapper.writeValueAsString(user_category);
+      //shardedJedis.hset("user_categories",uid,categoryStr);
     }catch(Exception e){
       successful=false;
       e.printStackTrace();
@@ -68,8 +87,21 @@ public class QueryServerServlet extends HessianServlet implements Submit{
       for(Map.Entry<String,Map<String,Double>> entry: user_categories.entrySet()){
         Map<String,Double> user=entry.getValue();
         String uid=entry.getKey();
-        String categoryStr=mapper.writeValueAsString(user);
-        shardedJedis.hset("user_categories",uid,categoryStr);
+        Map<String,Integer> spUser=getSimplifiedCategories(user);
+        StringBuilder resultBuilder=new StringBuilder();
+        for(Map.Entry<String,Integer> entry1: spUser.entrySet()){
+            resultBuilder.append(entry1.getKey());
+            if(entry1.getValue()<10)
+              resultBuilder.append("0"+entry1.getValue());
+             else
+              resultBuilder.append(entry1.getValue());
+        }
+        String categoryStr=resultBuilder.toString();
+        String uidMd5= BDMD5.getInstance().toMD5(uid);
+        logger.info("uidMd5 "+uidMd5);
+        shardedJedis.set(uidMd5,categoryStr);
+        //String categoryStr=mapper.writeValueAsString(user);
+        //shardedJedis.hset("user_categories",uid,categoryStr);
       }
     }catch(Exception e){
       successful=false;
@@ -88,22 +120,27 @@ public class QueryServerServlet extends HessianServlet implements Submit{
     for (String url : user.keySet()) {
       if (this.url_category.containsKey(url)) {
         String category = this.url_category.get(url);
-        double category_probability = Double.valueOf(shardedJedis.hget(category_probability_key, category));
-        double url_probability = Double.valueOf(shardedJedis.hget(url_probability_key, url));
+        String category_probability_str=shardedJedis.hget(category_probability_key, category);
+        String url_probability_str=shardedJedis.hget(url_probability_key,url);
+        try{
+        double category_probability = Double.valueOf(category_probability_str);
+        double url_probability = Double.valueOf(url_probability_str);
         int url_frequent = user.get(url);
         double category_weight = category_probability * url_frequent * url_probability;
-        System.out.println(url);
-        System.out.println(url_frequent);
-        System.out.println(url_probability);
-        System.out.println(category);
-        System.out.println(category_probability);
-
+        //System.out.println("url: url"+" ||| url_frequent: "+url_frequent+" ||| url_probability: "+url_probability
+        //                   +" ||| category: "+category+" ||| category_probability: "+category_probability);
         if (user_category.containsKey(category)) {
           user_category.put(category, user_category.get(category) + category_weight);
         } else {
           user_category.put(category, category_weight);
         }
         categories_weight += category_weight;
+      }catch (Exception e){
+          e.printStackTrace();
+          System.out.println("category: " + category + " url: " + url);
+          System.out.println(category_probability_str + "   " + url_probability_str);
+          continue;
+        }
       }
     }
 
@@ -124,6 +161,49 @@ public class QueryServerServlet extends HessianServlet implements Submit{
     }
     return user_categories;
   }
+
+  protected Map<String,Integer> getSimplifiedCategories(Map<String,Double> user_category){
+    Map<String,Double> spCategories=new HashMap<>();
+    Configuration conf= Config.createConfig("/category_map.properties", Config.ConfigFormat.properties);
+    logger.info("get keys in conf");
+    Iterator<String> keys=conf.getKeys();
+
+    while(keys.hasNext()){
+      logger.info("key: "+keys.next());
+    }
+    logger.info("all keys list");
+    for(Map.Entry<String,Double> entry: user_category.entrySet()){
+      String spCategory=getSpCategory(conf,entry.getKey());
+      if(spCategory==null){
+        //logger.info("origCategory "+entry.getKey()+" spCategory is null");
+        spCategory="z";
+      }else {
+        logger.info("origCategory "+entry.getKey());
+      }
+      Double probability=spCategories.get(spCategory);
+      if(probability==null){
+        probability=new Double(0);
+      }
+      probability+=entry.getValue();
+      spCategories.put(spCategory,probability);
+    }
+    Map<String,Integer> spCategoryProbs=new HashMap<String,Integer>();
+    int sum=0;
+    for(Map.Entry<String,Double> entry: spCategories.entrySet()){
+       if(!entry.getKey().equals("z")){
+         Integer prob=(int)(entry.getValue()*100);
+         spCategoryProbs.put(entry.getKey(),prob);
+         sum+=prob;
+       }
+    }
+    spCategoryProbs.put("z",100-sum);
+    return spCategoryProbs;
+  }
+
+  private String getSpCategory(Configuration conf,String category){
+    return conf.getString(category);
+  }
+
 
 
 }

@@ -47,24 +47,26 @@ public class BayesTrainer {
   }
 
   public static void main(String[] args) {
+    if(args.length<3)
+    {
+      logger.info("args length should be greater then 3. 0: click_log_file 1:url_category_file 2:restoreFrequencyWay");
+      return;
+    }
     String click_log_file = args[0];
-    String restoreWay = args[1];
+    String url_category_file=args[1];
+    String restoreWay = args[2];
     BayesTrainer bayesTrainer = new BayesTrainer();
     if (restoreWay.equals("redis")) {
-      bayesTrainer.trainFromRedis(click_log_file);
+      bayesTrainer.trainFromRedis(click_log_file,url_category_file);
     } else if (restoreWay.equals("disk")) {
-      String url_category_file = bayesTrainer.getDefaultUrlcategoryFile(),
-        url_frequent_file = bayesTrainer.getDefaultUrlFrequentFile(),
+        String url_frequent_file = bayesTrainer.getDefaultUrlFrequentFile(),
         category_frequent_file = bayesTrainer.getDefaultCategoryFrequentFile();
-      if (args.length > 2) {
-        url_category_file = args[2];
         if (args.length > 3) {
           url_frequent_file = args[3];
           if (args.length > 4) {
             category_frequent_file = args[4];
           }
         }
-      }
       bayesTrainer.trainFromFile(click_log_file, url_category_file, url_frequent_file, category_frequent_file);
     } else {
       logger.info("args[1] should be disk or redis but it is " + args[1]);
@@ -115,8 +117,10 @@ public class BayesTrainer {
 
   private void load_category_frequent(ShardedJedis shardedJedis) {
     Map<String, String> map = shardedJedis.hgetAll("category_frequent");
+    logger.info("load category_frequent from redis");
     for (Map.Entry<String, String> entry : map.entrySet()) {
       this.category_frequent.put(entry.getKey(), Long.valueOf(entry.getValue()));
+      logger.info("category: "+entry.getKey()+" value: "+entry.getValue());
     }
   }
 
@@ -183,12 +187,14 @@ public class BayesTrainer {
     for (Map.Entry<String, Long> entry : url_frequent.entrySet()) {
       url_frequent_map.put(entry.getKey(), String.valueOf(entry.getValue()));
     }
+    shardedJedis.del(url_frequent_key);
     if (url_frequent_map.size() != 0)
       shardedJedis.hmset(url_frequent_key, url_frequent_map);
     Map<String, String> category_frequent_map = new HashMap<String, String>();
     for (Map.Entry<String, Long> entry : category_frequent.entrySet()) {
       category_frequent_map.put(entry.getKey(), String.valueOf(entry.getValue()));
     }
+    shardedJedis.del(category_frequent_key);
     if (category_frequent_map.size() != 0)
       shardedJedis.hmset(category_frequent_key, category_frequent_map);
     if (url_category.size() != 0)
@@ -242,12 +248,12 @@ public class BayesTrainer {
     return configuration.getString("url_category_file");
   }
 
-  public void trainFromRedis(String click_log_file) {
+  public void trainFromRedis(String click_log_file,String url_category_file) {
     ShardedJedis shardedJedis = null;
     boolean successful = true;
     try {
       shardedJedis = manager.borrowShardedJedis();
-      load_url_category(shardedJedis);
+      load_url_category(url_category_file);
       load_category_frequent(shardedJedis);
       load_url_frequent(shardedJedis);
       load_click_log(click_log_file);
@@ -330,9 +336,14 @@ public class BayesTrainer {
     }
     for (String url : this.url_frequent.keySet()) {
       String category = this.url_category.get(url);
+      try{
       long category_frequent = this.category_frequent.get(category);
       long url_frequent = this.url_frequent.get(url);
       this.url_probability.put(url, 1.0 * url_frequent / category_frequent);
+      }catch (Exception e){
+        e.printStackTrace();
+        logger.info("category "+category+" url "+url);
+      }
     }
   }
 
