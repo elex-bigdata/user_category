@@ -163,7 +163,7 @@ public class QueryServerServlet extends HessianServlet implements Submit{
   }
 
   protected Map<String,Integer> getSimplifiedCategories(Map<String,Double> user_category){
-    Map<String,Double> spCategories=new HashMap<>();
+    Map<String,Double> spCategories=new HashMap<String,Double>();
     Configuration conf= Config.createConfig("/category_map.properties", Config.ConfigFormat.properties);
     logger.info("get keys in conf");
     Iterator<String> keys=conf.getKeys();
