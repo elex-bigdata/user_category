@@ -56,10 +56,9 @@ public class QueryServerServlet extends HessianServlet implements Submit{
       StringBuilder resultBuilder=new StringBuilder();
       for(Map.Entry<String,Integer> entry1: spUser.entrySet()){
         resultBuilder.append(entry1.getKey());
-        if(entry1.getValue()<10)
-          resultBuilder.append("0"+entry1.getValue());
-        else
-          resultBuilder.append(entry1.getValue());
+        // 使用16进制以便只用两位记录比例（防止出现z100的情况)
+        resultBuilder.append(entry1.getValue()/16);
+        resultBuilder.append(entry1.getValue()%16);
       }
       String categoryStr=resultBuilder.toString();
       String uidMd5= BDMD5.getInstance().toMD5(uid);
@@ -81,6 +80,7 @@ public class QueryServerServlet extends HessianServlet implements Submit{
   //query interface for users.map<uid,Map<url,count>>
   @Override
   public void submitBatch(Map<String, Map<String, Integer>> users) {
+    logger.info("submit Batch");
     ShardedJedis shardedJedis=null;
     boolean successful=true;
     try{
