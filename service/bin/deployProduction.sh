@@ -1,5 +1,5 @@
-tomcat_home_tail=user_cat
-tomcat_home=/home/hadoop/catalina/apache-tomcat-7.0.52.${tomcat_home_tail}
+tomcat_home_tail=ps
+tomcat_home=/home/hadoop/catalina/apache.tomcat.ps
 baseDir=`dirname $0`/..
 aid=user_category_service
 sh ${tomcat_home}/bin/shutdown.sh

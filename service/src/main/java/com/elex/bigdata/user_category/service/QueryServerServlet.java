@@ -42,6 +42,8 @@ public class QueryServerServlet extends HessianServlet implements Submit{
          redisShardedPoolManager.returnBrokenShardedJedis(shardedJedis);
      }
   }
+
+  //query Interface for single user: uid ,map<url,frequent>
   @Override
   public void submit(String uid,Map<String, Integer> user) {
     ShardedJedis shardedJedis=null;
@@ -76,6 +78,7 @@ public class QueryServerServlet extends HessianServlet implements Submit{
     }
   }
 
+  //query interface for users.map<uid,Map<url,count>>
   @Override
   public void submitBatch(Map<String, Map<String, Integer>> users) {
     ShardedJedis shardedJedis=null;
@@ -113,7 +116,7 @@ public class QueryServerServlet extends HessianServlet implements Submit{
         redisShardedPoolManager.returnBrokenShardedJedis(shardedJedis);
     }
   }
-
+  //get category:probability for the user. category_probability*url_frequent*url_probability
   protected Map<String,Double>  inference(ShardedJedis shardedJedis,Map<String, Integer> user) {
     double categories_weight = 0;
     Map<String, Double> user_category = new HashMap<String, Double>();
@@ -150,7 +153,7 @@ public class QueryServerServlet extends HessianServlet implements Submit{
 
     return user_category;
   }
-
+  // get Map<uid,Map<category,probability>>
   protected Map<String,Map<String,Double>> inferenceBatch(ShardedJedis shardedJedis,Map<String,Map<String,Integer>> users) {
     Map<String,Map<String,Double>> user_categories=new HashMap<String, Map<String, Double>>();
     for(Map.Entry<String,Map<String,Integer>> entry: users.entrySet()){
@@ -161,7 +164,7 @@ public class QueryServerServlet extends HessianServlet implements Submit{
     }
     return user_categories;
   }
-
+  // get simplified categories(three categories a,b,z) from original categories(about 20 categories)
   protected Map<String,Integer> getSimplifiedCategories(Map<String,Double> user_category){
     Map<String,Double> spCategories=new HashMap<String,Double>();
     Configuration conf= Config.createConfig("/category_map.properties", Config.ConfigFormat.properties);

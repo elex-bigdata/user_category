@@ -93,7 +93,13 @@ public class BayesTrainer {
              put url_probability and category_probability to redis.
              put url_frequent and category_frequent to disk.
    */
-
+  /*
+  load url_category file from disk
+  url_category:
+     every line composed of type and urls .they are seperated by " ";
+     Notícias odia.ig.com.br www.abril.com.br
+     produce map which has url as key and category ad map.
+  */
   private void load_url_category(String url_category_file) throws IOException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(url_category_file)), "UTF8"));
     String line = "";
@@ -110,11 +116,12 @@ public class BayesTrainer {
     }
     reader.close();
   }
-
+  // load url_category from redis
   private void load_url_category(ShardedJedis shardedJedis) {
     this.url_category = shardedJedis.hgetAll("url_category");
   }
-
+  // load category frequent from redis .
+  // stored a hashMap in redis "category_frequent".
   private void load_category_frequent(ShardedJedis shardedJedis) {
     Map<String, String> map = shardedJedis.hgetAll("category_frequent");
     logger.info("load category_frequent from redis");
@@ -123,7 +130,11 @@ public class BayesTrainer {
       logger.info("category: "+entry.getKey()+" value: "+entry.getValue());
     }
   }
-
+  /*
+    load category_frequent from disk file
+    each line composed of category and frequent seperated by "\t"
+    put category:frequent to map
+  */
   private void load_category_frequent(String category_frequent_file) {
     try {
       BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(category_frequent_file)), "UTF8"));
@@ -142,14 +153,20 @@ public class BayesTrainer {
       e.printStackTrace();
     }
   }
-
+  /*
+    load url_frequent from redis
+  */
   private void load_url_frequent(ShardedJedis shardedJedis) {
     Map<String, String> map = shardedJedis.hgetAll("url_frequent");
     for (Map.Entry<String, String> entry : map.entrySet()) {
       this.url_frequent.put(entry.getKey(), Long.valueOf(entry.getValue()));
     }
   }
-
+  /*
+    load url_frequent from disk file
+    each line composed of url and frequent seperated by "\t"
+    put category:frequent to map
+   */
   private void load_url_frequent(String url_frequent_file) {
     try {
       BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(url_frequent_file)), "UTF8"));
@@ -168,7 +185,9 @@ public class BayesTrainer {
       e.printStackTrace();
     }
   }
-
+  /*
+     put url_probability , category_probability, url_frequent,category_frequent to redis
+   */
   private void putToRedis(ShardedJedis shardedJedis) {
     Map<String, String> url_probability_map = new HashMap<String, String>();
     for (Map.Entry<String, Double> entry : url_probability.entrySet()) {
@@ -200,7 +219,9 @@ public class BayesTrainer {
     if (url_category.size() != 0)
       shardedJedis.hmset(url_category_key, url_category);
   }
-
+  /*
+     put url_frequent,category_frequent to disk to save key infos.
+   */
   private void putToDisk() throws IOException {
     String url_frequent_file = getUrlFrequentFile();
     BufferedWriter url_frequent_writer = new BufferedWriter(new FileWriter(url_frequent_file));
@@ -247,7 +268,8 @@ public class BayesTrainer {
   protected String getDefaultUrlcategoryFile() {
     return configuration.getString("url_category_file");
   }
-
+  // get url_category and category_frequent from redis to train.
+  // input is click_log and url_category files
   public void trainFromRedis(String click_log_file,String url_category_file) {
     ShardedJedis shardedJedis = null;
     boolean successful = true;
@@ -270,7 +292,8 @@ public class BayesTrainer {
         manager.returnBrokenShardedJedis(shardedJedis);
     }
   }
-
+  //get click_log("url:count"),url_category,url_frequent,category_frequent from disk file to train
+  // the train is incremental.
   public void trainFromFile(String click_log_file, String url_category_file, String url_frequent_file, String category_frequent_file) {
     ShardedJedis shardedJedis = null;
     boolean successful = true;
@@ -294,7 +317,8 @@ public class BayesTrainer {
     }
   }
 
-
+   //load click log from disk.
+  //each line is composed of url and frequent.
   private void load_click_log(String click_log_file) throws IOException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(click_log_file)), "UTF8"));
     String line = "";
@@ -328,7 +352,7 @@ public class BayesTrainer {
     }
     reader.close();
   }
-
+  // according to category_frequent and url_frequent to produce category_probability and url_probability
   private void train_model() {
     for (String category : this.category_frequent.keySet()) {
       long category_frequent = this.category_frequent.get(category);
