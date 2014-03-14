@@ -59,8 +59,10 @@ public class QueryServerServlet extends HessianServlet implements Submit {
       for (Map.Entry<String, Integer> entry1 : spUser.entrySet()) {
         resultBuilder.append(entry1.getKey());
         // 使用16进制以便只用两位记录比例（防止出现z100的情况)
-        resultBuilder.append(entry1.getValue() / 16);
-        resultBuilder.append(entry1.getValue() % 16);
+        if(entry1.getValue()<16)
+          resultBuilder.append("0"+Integer.toHexString(entry1.getValue()));
+        else
+          resultBuilder.append(Integer.toHexString(entry1.getValue()));
       }
       String categoryStr = resultBuilder.toString();
       String uidMd5 = BDMD5.getInstance().toMD5(uid);
@@ -96,8 +98,10 @@ public class QueryServerServlet extends HessianServlet implements Submit {
         for (Map.Entry<String, Integer> entry1 : spUser.entrySet()) {
           resultBuilder.append(entry1.getKey());
           // 使用16进制以便只用两位记录比例（防止出现z100的情况)
-          resultBuilder.append(entry1.getValue() / 16);
-          resultBuilder.append(entry1.getValue() % 16);
+          if(entry1.getValue()<16)
+            resultBuilder.append("0"+Integer.toHexString(entry1.getValue()));
+          else
+            resultBuilder.append(Integer.toHexString(entry1.getValue()));
         }
         String categoryStr = resultBuilder.toString();
         String uidMd5 = BDMD5.getInstance().toMD5(uid);

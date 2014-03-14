@@ -30,5 +30,6 @@ public class TestServerServlet {
       logger.info("key: "+keys.next());
     }
     logger.info("all keys list");
+    logger.info(Integer.toHexString(6));
   }
 }
