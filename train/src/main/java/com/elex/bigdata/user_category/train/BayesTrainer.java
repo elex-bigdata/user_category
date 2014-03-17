@@ -178,7 +178,7 @@ public class BayesTrainer {
         }
         String url = tokens[0];
         String frequent = tokens[1];
-        this.category_frequent.put(url, Long.valueOf(frequent));
+        this.url_frequent.put(url, Long.valueOf(frequent));
       }
       reader.close();
     } catch (IOException e) {
