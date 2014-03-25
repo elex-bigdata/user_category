@@ -26,9 +26,12 @@ public class QueryServerServlet extends HessianServlet implements Submit {
   private BasicRedisShardedPoolManager redisShardedPoolManager = null;
   private Map<String, String> url_category = new HashMap<String, String>();
   private Logger logger = Logger.getLogger(QueryServerServlet.class);
+  private Configuration categoryMapconf;
+  private Map<String,String> category_SpCategory_map=new HashMap<>();
 
   public QueryServerServlet() {
     redisShardedPoolManager = new BasicRedisShardedPoolManager("user_category_server", "/redis.site.properties");
+    categoryMapconf = Config.createConfig("/category_map.properties", Config.ConfigFormat.properties);
     boolean successful = true;
     ShardedJedis shardedJedis = null;
     try {
@@ -42,6 +45,12 @@ public class QueryServerServlet extends HessianServlet implements Submit {
         redisShardedPoolManager.returnShardedJedis(shardedJedis);
       else
         redisShardedPoolManager.returnBrokenShardedJedis(shardedJedis);
+    }
+
+    Iterator<String> categories=categoryMapconf.getKeys();
+    while(categories.hasNext()){
+       String category=categories.next();
+       category_SpCategory_map.put(category,categoryMapconf.getString(category));
     }
   }
 
@@ -174,9 +183,9 @@ public class QueryServerServlet extends HessianServlet implements Submit {
   // get simplified categories(three categories a,b,z) from original categories(about 20 categories)
   protected Map<String, Integer> getSimplifiedCategories(Map<String, Double> user_category) {
     Map<String, Double> spCategories = new HashMap<String, Double>();
-    Configuration conf = Config.createConfig("/category_map.properties", Config.ConfigFormat.properties);
+    //Configuration conf = Config.createConfig("/category_map.properties", Config.ConfigFormat.properties);
     for (Map.Entry<String, Double> entry : user_category.entrySet()) {
-      String spCategory = getSpCategory(conf, entry.getKey());
+      String spCategory = category_SpCategory_map.get(entry.getKey());
       if (spCategory == null) {
         //logger.info("origCategory "+entry.getKey()+" spCategory is null");
         spCategory = "z";
