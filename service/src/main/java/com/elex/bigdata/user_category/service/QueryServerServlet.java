@@ -105,7 +105,7 @@ public class QueryServerServlet extends HessianServlet implements Submit {
         }
         String categoryStr = resultBuilder.toString();
         String uidMd5 = BDMD5.getInstance().toMD5(uid);
-        logger.info("uidMd5 " + uidMd5);
+        logger.info(uid+": "+categoryStr);
         shardedJedis.set(uidMd5, categoryStr);
         //String categoryStr=mapper.writeValueAsString(user);
         //shardedJedis.hset("user_categories",uid,categoryStr);
