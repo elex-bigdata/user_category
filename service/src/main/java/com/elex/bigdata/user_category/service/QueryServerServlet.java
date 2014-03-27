@@ -27,7 +27,7 @@ public class QueryServerServlet extends HessianServlet implements Submit {
   private Map<String, String> url_category = new HashMap<String, String>();
   private Logger logger = Logger.getLogger(QueryServerServlet.class);
   private Configuration categoryMapconf;
-  private Map<String,String> category_SpCategory_map=new HashMap<>();
+  private Map<String,String> category_SpCategory_map=new HashMap<String,String>();
 
   public QueryServerServlet() {
     redisShardedPoolManager = new BasicRedisShardedPoolManager("user_category_server", "/redis.site.properties");
